@@ -1,0 +1,55 @@
+Для добавления токена авторизации ко всем запросам, вам нужно будет использовать TokenAuthentication в Django REST framework.
+
+Установите djangorestframework и django-rest-framework-simplejwt:
+sh
+Copy code
+pip install djangorestframework django-rest-framework-simplejwt
+Добавьте rest_framework и rest_framework.authtoken в INSTALLED_APPS в settings.py.
+python
+Copy code
+INSTALLED_APPS = [
+    ...
+    'rest_framework',
+    'rest_framework.authtoken',
+    ...
+]
+Добавьте 'rest_framework.authentication.TokenAuthentication' в DEFAULT_AUTHENTICATION_CLASSES в settings.py.
+python
+Copy code
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+}
+Создайте токен для пользователя, которым вы хотите протестировать запросы, или используйте существующий токен. Вы можете создать токен в интерактивной оболочке Django, используя следующий код:
+python
+Copy code
+from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
+
+user = User.objects.get(username='username')
+token = Token.objects.create(user=user)
+print(token.key)
+Во все ваши представления, которые вы хотите защитить токеном, добавьте декоратор @authentication_classes([TokenAuthentication]) и декоратор @permission_classes([IsAuthenticated]).
+Например:
+
+python
+Copy code
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.permissions import IsAuthenticated
+
+@api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def device_list(request):
+    devices = Device.objects.all()
+    serializer = DeviceListSerializer(devices, many=True)
+    return Response(serializer.data)
+Добавьте токен в ваш запрос, используя заголовок Authorization. Например:
+makefile
+Copy code
+Authorization: Token 9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b
+Вы можете добавить этот заголовок в ваш запрос, используя клиентскую библиотеку HTTP, такую как requests, или добавив его вручную в ваш запрос через curl.
+
+После того, как вы добавите токен в запрос, Django REST framework будет использовать TokenAuthentication для аутентификации пользователя и проверки его разрешений на доступ к пред
